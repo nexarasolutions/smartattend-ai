@@ -29,6 +29,7 @@ interface AuthContextValue {
   error: string | null;
   refresh: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string, name: string, role: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 }
 
@@ -99,6 +100,29 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, [refresh]);
 
+  const signUp = useCallback(async (email: string, password: string, name: string, role: string): Promise<string | null> => {
+    try {
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            full_name: name,
+            role,
+          },
+        },
+      });
+      if (authError) return authError.message;
+      if (data.session) {
+        await refresh();
+      }
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : 'Sign up failed';
+    }
+  }, [refresh]);
+
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
@@ -111,7 +135,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setStatus('anonymous');
   }, []);
 
-  const value = useMemo(() => ({ status, user, error, refresh, signIn, signOut }), [status, user, error, refresh, signIn, signOut]);
+  const value = useMemo(() => ({ status, user, error, refresh, signIn, signUp, signOut }), [status, user, error, refresh, signIn, signUp, signOut]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

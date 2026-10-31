@@ -41,9 +41,12 @@ def request_identity() -> dict | None:
             )
             sub = payload.get("sub")
             if sub:
+                user_metadata = payload.get("user_metadata") or {}
                 return {
                     "open_id": str(sub),
                     "email": payload.get("email"),
+                    "name": user_metadata.get("name") or user_metadata.get("full_name"),
+                    "role": user_metadata.get("role"),
                     "source": "supabase",
                 }
         except jwt.PyJWTError:

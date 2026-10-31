@@ -50,7 +50,7 @@ function RecordTable({ rows, kind, empty = 'No persisted records are available i
 }
 
 function MetricCards({ metrics }: { metrics: Array<{ label: string; value: string; helper?: string }> }) {
-  return <div className="live-metric-grid">{metrics.map((metric) => <article className="live-metric" key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.helper ?? 'Manus-managed records'}</small></article>)}</div>;
+  return <div className="live-metric-grid">{metrics.map((metric) => <article className="live-metric" key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.helper ?? 'Live database records'}</small></article>)}</div>;
 }
 
 function LivePage({ role, path, data, reload }: { role: PreviewRole; path: string; data: Bundle; reload: () => void }) {
@@ -79,7 +79,7 @@ function LivePage({ role, path, data, reload }: { role: PreviewRole; path: strin
 
   return (
     <section className="live-workspace">
-      <div className="live-workspace-heading"><div><p className="eyebrow">MANUS-MANAGED RECORDS · {role.toUpperCase()}</p><h1>{title}</h1><p>Values below are returned by the authenticated Flask API. No sample records are substituted.</p></div><button className="button button-secondary" onClick={reload}><RefreshCw size={15} /> Refresh</button></div>
+      <div className="live-workspace-heading"><div><p className="eyebrow">LIVE DATABASE RECORDS · {role.toUpperCase()}</p><h1>{title}</h1><p>Values below are returned by the authenticated API connected to Supabase PostgreSQL. Real-world records.</p></div><button className="button button-secondary" onClick={reload}><RefreshCw size={15} /> Refresh</button></div>
       {actionMessage && <div className="live-action-message" role="status">{actionMessage}<button onClick={() => setActionMessage(null)} aria-label="Dismiss">×</button></div>}
 
       {path === '/' && role === 'Admin' && <AdminOverview summary={obj(data.adminSummary)} report={obj(data.reportSummary)} low={list(data.lowAttendance)} predictions={list(data.predictions)} corrections={list(data.corrections)} onReviewed={(message) => { setActionMessage(message); reload(); }} />}
@@ -241,7 +241,7 @@ function AttendanceMarkForm({ sessions, students, onSaved }: { sessions: Row[]; 
   const [error, setError] = useState('');
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError('');
-    try { await api.post('/attendance', { session_id: sessionId, student_id: studentId, status }); onSaved('Attendance saved to the Manus-managed database.'); }
+    try { await api.post('/attendance', { session_id: sessionId, student_id: studentId, status }); onSaved('Attendance saved to Supabase PostgreSQL database.'); }
     catch (requestError) { setError(toApiFailure(requestError).message); }
     finally { setBusy(false); }
   }
@@ -321,7 +321,7 @@ function DeviceTable({ rows, classrooms, onUpdated }: { rows: Row[]; classrooms:
 
 function StudentProvisionForm({ users, departments, sections, onSaved }: { users: Row[]; departments: Row[]; sections: Row[]; onSaved: (message: string) => void }) {
   const [userId, setUserId] = useState(''); const [departmentId, setDepartmentId] = useState(''); const [sectionId, setSectionId] = useState(''); const [rollNumber, setRollNumber] = useState(''); const [academicYear, setAcademicYear] = useState('1'); const [error, setError] = useState('');
-  async function submit(event: FormEvent) { event.preventDefault(); setError(''); try { await api.post('/admin/students', { user_id: userId, department_id: departmentId, section_id: sectionId, roll_number: rollNumber, academic_year: Number(academicYear) }); onSaved('Student profile provisioned and linked to its Manus identity.'); setRollNumber(''); } catch (requestError) { setError(toApiFailure(requestError).message); } }
+  async function submit(event: FormEvent) { event.preventDefault(); setError(''); try { await api.post('/admin/students', { user_id: userId, department_id: departmentId, section_id: sectionId, roll_number: rollNumber, academic_year: Number(academicYear) }); onSaved('Student profile provisioned successfully.'); setRollNumber(''); } catch (requestError) { setError(toApiFailure(requestError).message); } }
   return <LiveSection title="Provision a student after their first sign-in"><form className="live-inline-form" onSubmit={(event) => void submit(event)}><label>Pending account<select value={userId} onChange={(event) => setUserId(event.target.value)} required><option value="">Select account</option>{users.map((row) => <option key={text(row.id)} value={text(row.id)}>{text(row.display_name)} · {text(row.email)}</option>)}</select></label><label>Department<select value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} required><option value="">Select department</option>{departments.map((row) => <option key={text(row.id)} value={text(row.id)}>{text(row.name)}</option>)}</select></label><label>Class section<select value={sectionId} onChange={(event) => setSectionId(event.target.value)} required><option value="">Select section</option>{sections.filter((row) => !departmentId || row.department_id === departmentId).map((row) => <option key={text(row.id)} value={text(row.id)}>{text(row.code)} · Year {text(row.academic_year)}</option>)}</select></label><label>Roll number<input value={rollNumber} onChange={(event) => setRollNumber(event.target.value)} maxLength={48} required /></label><label>Academic year<input type="number" min={1} max={12} value={academicYear} onChange={(event) => setAcademicYear(event.target.value)} required /></label><button className="button button-primary">Create student profile</button></form>{error && <p className="live-error-text">{error}</p>}</LiveSection>;
 }
 

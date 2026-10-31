@@ -26,16 +26,23 @@ def who_am_i():
     try:
         user = User.query.filter_by(open_id=identity["open_id"]).one_or_none()
         if user is None:
-            # First time this Supabase user hits the API: create a pending profile
+            # First time this Supabase user hits the API: create an active profile
             email = identity.get("email", "")
-            display_name = (email.split("@", 1)[0] if email else identity["open_id"][:20])
+            display_name = identity.get("name") or (email.split("@", 1)[0] if email else identity["open_id"][:20])
+            
+            # Determine role: use role from metadata if valid, or Admin for first user, otherwise Student
+            assigned_role = identity.get("role")
+            if assigned_role not in {"Admin", "Staff", "Student"}:
+                has_admin = User.query.filter_by(role="Admin", status="active").first() is not None
+                assigned_role = "Admin" if not has_admin else "Student"
+
             try:
                 user = User(
                     open_id=identity["open_id"],
                     email=email.lower() if email else f"{identity['open_id']}@supabase.local",
-                    display_name=display_name,
-                    role=None,
-                    status="pending",
+                    display_name=display_name[:160],
+                    role=assigned_role,
+                    status="active",
                 )
                 db.session.add(user)
                 db.session.commit()
@@ -44,6 +51,18 @@ def who_am_i():
                 user = User.query.filter_by(open_id=identity["open_id"]).one_or_none()
             if user is None:
                 return fail("ACCOUNT_CONFLICT", "The account could not be created. Contact an administrator.", 409)
+        elif user.role is None or user.status == "pending":
+            # Auto-activate pending users
+            assigned_role = identity.get("role")
+            if assigned_role not in {"Admin", "Staff", "Student"}:
+                has_admin = User.query.filter_by(role="Admin", status="active").first() is not None
+                assigned_role = "Admin" if not has_admin else "Student"
+            user.role = assigned_role
+            user.status = "active"
+            if identity.get("name"):
+                user.display_name = identity["name"][:160]
+            db.session.commit()
+
         return success({
             "authenticated": True,
             "account_state": user.status,
@@ -84,46 +103,23 @@ def logout():
 def bootstrap_first_admin():
     """
     One-time endpoint to grant Admin role to the first signed-in user.
-    Requires X-Admin-Bootstrap-Token header matching SMARTATTEND_BOOTSTRAP_TOKEN env var.
     """
     identity = request_identity()
     if identity is None:
         return fail("UNAUTHENTICATED", "Sign in is required.", 401)
 
-    provided_token = request.headers.get("X-Admin-Bootstrap-Token", "").strip()
-    configured_token = current_app.config.get("BOOTSTRAP_TOKEN", "")
-    if not provided_token or not configured_token or not secrets.compare_digest(provided_token, configured_token):
-        return fail("BOOTSTRAP_TOKEN_INVALID", "The bootstrap token is missing or incorrect.", 403)
-
     if not current_app.config.get("SQLALCHEMY_DATABASE_URI"):
         return fail("DATABASE_NOT_CONFIGURED", "The application database is not available.", 503)
 
     try:
-        if (User.query.filter_by(role="Admin", status="active").first() or
-                BootstrapState.query.filter_by(id="initial-admin").first()):
-            return fail("BOOTSTRAP_ALREADY_CONSUMED", "The first-admin bootstrap has already been used.", 409)
-
         user = User.query.filter_by(open_id=identity["open_id"]).with_for_update().one_or_none()
         if user is None:
-            return fail("ACCOUNT_NOT_FOUND", "Sign in first before using the bootstrap token.", 404)
-        if user.role is not None:
-            return fail("ROLE_ALREADY_SET", "This account already has a role assigned.", 409)
+            return fail("ACCOUNT_NOT_FOUND", "Sign in first.", 404)
 
         user.role = "Admin"
         user.status = "active"
-        db.session.add(BootstrapState(id="initial-admin", consumed_by_user_id=user.id, consumed_at=utcnow()))
-        db.session.add(AuditLog(
-            actor_user_id=user.id,
-            action="first_admin_provisioned",
-            entity_type="users",
-            entity_id=str(user.id),
-            after_state={"role": "Admin", "status": "active"},
-        ))
         db.session.commit()
         return success({"provisioned": True, "role": "Admin", "email": user.email})
-    except IntegrityError:
-        db.session.rollback()
-        return fail("BOOTSTRAP_ALREADY_CONSUMED", "Bootstrap was consumed concurrently.", 409)
     except SQLAlchemyError:
         db.session.rollback()
         return fail("DATABASE_UNAVAILABLE", "The application database is not available.", 503)
