@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:match*",
-      "destination": "https://smartattend-api.onrender.com/api/:match*"
+      "destination": "https://smartattend-ai-mbag.onrender.com/api/:match*"
     },
     {
       "source": "/((?!api/).*)",
