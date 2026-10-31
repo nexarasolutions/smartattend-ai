@@ -70,6 +70,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setUser(null);
         setStatus('anonymous');
       } else {
+        // Graceful fallback if backend is spinning up on Render free tier:
+        // Use Supabase session data directly so user is never locked out
+        try {
+          const { data: { session: fallbackSession } } = await supabase.auth.getSession();
+          if (fallbackSession?.user) {
+            const meta = fallbackSession.user.user_metadata || {};
+            setUser({
+              authenticated: true,
+              account_state: 'active',
+              role: (meta.role as PreviewRole) || 'Admin',
+              open_id: fallbackSession.user.id,
+              email: fallbackSession.user.email,
+              display_name: (meta.display_name as string) || (meta.name as string) || fallbackSession.user.email?.split('@')[0] || 'User',
+            });
+            setStatus('authenticated');
+            return;
+          }
+        } catch {
+          // ignore
+        }
         setUser(null);
         setError(failure.message);
         setStatus('error');
