@@ -13,7 +13,7 @@ import { PeoplePage } from './pages/People';
 import { SettingsPage } from './pages/Settings';
 
 function LoginPage() {
-  const { status, user, error, signIn, signUp, refresh, signOut } = useAuth();
+  const { status, user, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
