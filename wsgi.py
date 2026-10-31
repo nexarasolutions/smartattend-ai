@@ -16,3 +16,4 @@ if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "false").lower() == "true":
     with app.app_context():
         from flask_migrate import upgrade
         upgrade()
+
