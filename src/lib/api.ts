@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { supabase } from './auth';
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '/api';
+const FALLBACK_API_BASE = 'https://smartattend-api.onrender.com/api';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) || FALLBACK_API_BASE;
 
-/** All browser API requests use the configured base URL; Vite proxies /api to Flask during development. */
+/** All browser API requests use the configured base URL */
 export const api = axios.create({
   baseURL: API_BASE,
   timeout: 15_000,
@@ -19,10 +20,14 @@ function readCookie(name: string): string | null {
 }
 
 api.interceptors.request.use(async (config) => {
-  // Attach Supabase Bearer token to every request
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.access_token) {
-    config.headers.set('Authorization', `Bearer ${session.access_token}`);
+  try {
+    // Attach Supabase Bearer token if session exists
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      config.headers.set('Authorization', `Bearer ${session.access_token}`);
+    }
+  } catch {
+    // ignore
   }
   const method = (config.method ?? 'get').toUpperCase();
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {

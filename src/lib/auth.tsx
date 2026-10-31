@@ -1,12 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { api, toApiFailure } from './api';
 import type { PreviewRole } from '../types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const FALLBACK_SUPABASE_URL = 'https://pfjaffhkdvrfcelgslap.supabase.co';
+const FALLBACK_SUPABASE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmamFmZmhrZHZyZmNlbGdzbGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NTUyNTksImV4cCI6MjEwOTAzMTI1OX0.DqSWjpYxGilc68-Bz5YOgfPhf3l0FWnL6AuZi1aIT90';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL as string) || FALLBACK_SUPABASE_URL;
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || FALLBACK_SUPABASE_KEY;
+
+export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export type AuthStatus = 'loading' | 'anonymous' | 'authenticated' | 'error';
 
@@ -74,23 +78,34 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     void refresh();
-    // Listen for Supabase auth state changes (sign in / sign out)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, _session) => {
-      void refresh();
-    });
-    return () => subscription.unsubscribe();
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, _session) => {
+        void refresh();
+      });
+      return () => subscription.unsubscribe();
+    } catch {
+      // ignore
+    }
   }, [refresh]);
 
   const signIn = useCallback(async (email: string, password: string): Promise<string | null> => {
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    if (authError) return authError.message;
-    await refresh();
-    return null;
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) return authError.message;
+      await refresh();
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : 'Sign in failed';
+    }
   }, [refresh]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    try { await api.post('/auth/logout', {}); } catch { /* ignore */ }
+    try {
+      await supabase.auth.signOut();
+      await api.post('/auth/logout', {});
+    } catch {
+      /* ignore */
+    }
     setUser(null);
     setError(null);
     setStatus('anonymous');
