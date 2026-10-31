@@ -5,11 +5,13 @@ services:
     region: singapore
     plan: free
     buildCommand: pip install -r backend/requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 90 --access-logfile - --error-logfile - backend.wsgi:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 90 --access-logfile - --error-logfile - wsgi:app
     healthCheckPath: /_app/health
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.0
+      - key: PYTHONPATH
+        value: .
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_JWT_SECRET
