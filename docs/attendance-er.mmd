@@ -1,0 +1,235 @@
+erDiagram
+  %% SQL constraints also make STUDENTS.user_id, STAFF.user_id and ATTENDANCE_RECORDS.device_event_id unique.
+  DEPARTMENTS ||--o{ STUDENTS : enrolls
+  DEPARTMENTS ||--o{ STAFF : employs
+  DEPARTMENTS ||--o{ SUBJECTS : owns
+  DEPARTMENTS ||--o{ CLASS_SECTIONS : organizes
+  USERS ||--o| STUDENTS : identifies
+  USERS ||--o| STAFF : identifies
+  CLASS_SECTIONS ||--o{ STUDENTS : contains
+  SUBJECTS ||--o{ STAFF_SUBJECT_ASSIGNMENTS : assigned
+  STAFF ||--o{ STAFF_SUBJECT_ASSIGNMENTS : teaches
+  CLASS_SECTIONS ||--o{ STAFF_SUBJECT_ASSIGNMENTS : scopes
+  SUBJECTS ||--o{ CLASS_SESSIONS : scheduled
+  CLASS_SECTIONS ||--o{ CLASS_SESSIONS : hosts
+  STAFF ||--o{ CLASS_SESSIONS : leads
+  CLASS_SESSIONS ||--o{ ATTENDANCE_RECORDS : records
+  STUDENTS ||--o{ ATTENDANCE_RECORDS : attends
+  ATTENDANCE_RECORDS ||--o{ ATTENDANCE_CORRECTIONS : may_be_corrected
+  USERS ||--o{ ATTENDANCE_CORRECTIONS : requests_or_reviews
+  CLASSROOMS ||--o{ CLASS_SECTIONS : hosts
+  CLASSROOMS ||--o{ PI_DEVICES : mapped_to
+  PI_DEVICES ||--o{ DEVICE_CREDENTIALS : owns
+  PI_DEVICES ||--o{ DEVICE_EVENTS : receives
+  CLASS_SESSIONS o|--o{ DEVICE_EVENTS : associates
+  STUDENTS o|--o{ DEVICE_EVENTS : observed_subject
+  ML_MODEL_VERSIONS ||--o{ ML_PREDICTIONS : generates
+  STUDENTS ||--o{ ML_PREDICTIONS : forecast_for
+  SUBJECTS o|--o{ ML_PREDICTIONS : optional_subject_scope
+  USERS ||--o| BOOTSTRAP_STATE : provisions_first_admin
+  USERS ||--o{ NOTIFICATIONS : receives
+  USERS o|--o{ AUDIT_LOGS : performs
+  DEVICE_EVENTS o|--o| ATTENDANCE_RECORDS : may_create
+
+  BOOTSTRAP_STATE {
+    string id PK
+    uuid consumed_by_user_id FK
+    datetime consumed_at
+  }
+  USERS {
+    uuid id PK
+    string open_id UK
+    string email UK
+    string display_name
+    string role
+    string status
+    datetime created_at
+    datetime updated_at
+  }
+  DEPARTMENTS {
+    uuid id PK
+    string code UK
+    string name UK
+    datetime created_at
+    datetime updated_at
+  }
+  STUDENTS {
+    uuid id PK
+    uuid user_id FK
+    uuid department_id FK
+    uuid section_id FK
+    string roll_number UK
+    int academic_year
+    string status
+    datetime created_at
+    datetime updated_at
+  }
+  STAFF {
+    uuid id PK
+    uuid user_id FK
+    uuid department_id FK
+    string staff_number UK
+    string status
+    datetime created_at
+    datetime updated_at
+  }
+  SUBJECTS {
+    uuid id PK
+    uuid department_id FK
+    string code UK
+    string name
+    int credits
+    datetime created_at
+    datetime updated_at
+  }
+  CLASSROOMS {
+    uuid id PK
+    string building
+    string room_code UK
+    string description
+    datetime created_at
+    datetime updated_at
+  }
+  CLASS_SECTIONS {
+    uuid id PK
+    uuid department_id FK
+    uuid classroom_id FK
+    string code
+    int academic_year
+    string term
+    datetime created_at
+    datetime updated_at
+  }
+  STAFF_SUBJECT_ASSIGNMENTS {
+    uuid id PK
+    uuid staff_id FK
+    uuid subject_id FK
+    uuid section_id FK
+    date valid_from
+    date valid_to
+    datetime created_at
+    datetime updated_at
+  }
+  CLASS_SESSIONS {
+    uuid id PK
+    uuid subject_id FK
+    uuid section_id FK
+    uuid staff_id FK
+    uuid classroom_id FK
+    datetime starts_at
+    datetime ends_at
+    string status
+    datetime created_at
+    datetime updated_at
+  }
+  ATTENDANCE_RECORDS {
+    uuid id PK
+    uuid session_id FK
+    uuid student_id FK
+    string status
+    string source
+    uuid device_event_id FK
+    uuid recorded_by_user_id FK
+    datetime recorded_at
+    datetime created_at
+    datetime updated_at
+  }
+  ATTENDANCE_CORRECTIONS {
+    uuid id PK
+    uuid attendance_record_id FK
+    uuid requested_by_user_id FK
+    uuid reviewed_by_user_id FK
+    string prior_status
+    string requested_status
+    string reason
+    string state
+    string review_note
+    datetime reviewed_at
+    datetime created_at
+    datetime updated_at
+  }
+  PI_DEVICES {
+    uuid id PK
+    string device_id UK
+    uuid classroom_id FK
+    string status
+    string firmware_version
+    json last_health
+    datetime last_heartbeat_at
+    datetime created_at
+    datetime updated_at
+  }
+  DEVICE_CREDENTIALS {
+    uuid id PK
+    uuid device_id FK
+    string credential_hash UK
+    datetime issued_at
+    datetime revoked_at
+    datetime created_at
+    datetime updated_at
+  }
+  DEVICE_EVENTS {
+    uuid id PK
+    uuid device_id FK
+    uuid session_id FK
+    uuid student_id FK
+    string event_id
+    string idempotency_key
+    string event_type
+    string processing_status
+    datetime occurred_at
+    datetime received_at
+    json payload
+    string failure_code
+    datetime created_at
+    datetime updated_at
+  }
+  ML_MODEL_VERSIONS {
+    uuid id PK
+    string model_version UK
+    string algorithm
+    binary artifact
+    string artifact_sha256 UK
+    json feature_names
+    json evaluation_metrics
+    json feature_importance
+    int training_rows
+    datetime training_cutoff
+    datetime trained_at
+    string state
+  }
+  ML_PREDICTIONS {
+    uuid id PK
+    uuid student_id FK
+    uuid subject_id FK
+    string model_version FK
+    numeric predicted_percentage
+    string risk_category
+    numeric calibrated_confidence
+    json feature_attribution
+    datetime cutoff_at
+    datetime generated_at
+    datetime created_at
+    datetime updated_at
+  }
+  NOTIFICATIONS {
+    uuid id PK
+    uuid user_id FK
+    string kind
+    string title
+    string body
+    datetime read_at
+    datetime created_at
+    datetime updated_at
+  }
+  AUDIT_LOGS {
+    uuid id PK
+    uuid actor_user_id FK
+    string action
+    string entity_type
+    string entity_id
+    json before_state
+    json after_state
+    string request_id
+    datetime created_at
+  }

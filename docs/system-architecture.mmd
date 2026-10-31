@@ -1,0 +1,37 @@
+flowchart LR
+  subgraph browser[Browser / HTTPS Preview or published site]
+    ui[React SPA<br/>TypeScript · Tailwind · Router · Recharts]
+    state[Demo fixtures<br/>explicitly labeled · Phase 1 only]
+    ui --> state
+  end
+  subgraph app[SmartAttend application service]
+    proxy[Relative /api route<br/>Vite proxy in development]
+    auth[Flask auth & role authorization<br/>Manus OAuth · JWT session]
+    api[Flask REST blueprints<br/>students · staff · attendance · reports]
+    device[Flask device API<br/>HTTPS · idempotent events]
+    ml[Prediction service<br/>pandas · numpy · scikit-learn]
+    audit[Audit events · structured logs]
+    proxy --> auth
+    proxy --> api
+    proxy --> device
+    api --> audit
+    auth --> audit
+    device --> audit
+  end
+  subgraph persistence[Manus-managed relational database]
+    mysql[(MySQL-compatible DB<br/>runtime DATABASE_URL)]
+    bootstrap[Single-use first-Admin bootstrap state]
+    mysql --> bootstrap
+  end
+  subgraph devices[Raspberry Pi devices]
+    pi[Pi agent<br/>device credential · queued events]
+    sensor[Pluggable sensor adapter<br/>type not yet selected]
+    sensor --> pi
+  end
+  ui -->|same-origin HTTPS /api| proxy
+  api -->|SQLAlchemy · migrations| mysql
+  auth -->|user and role lookup| mysql
+  device -->|sessions · idempotency · health| mysql
+  mysql --> ml
+  ml -->|versioned forecast and risk output| mysql
+  pi -->|HTTPS JSON · heartbeat · event ID| device

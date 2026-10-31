@@ -1,0 +1,13 @@
+{
+  "routes": [
+    { "path": "/", "title": "Overview" },
+    { "path": "/login", "title": "Sign in" },
+    { "path": "/attendance", "title": "Attendance" },
+    { "path": "/predictions", "title": "AI forecast" },
+    { "path": "/reports", "title": "Reports" },
+    { "path": "/devices", "title": "IoT devices" },
+    { "path": "/students", "title": "Students" },
+    { "path": "/staff", "title": "Staff and subjects" },
+    { "path": "/settings", "title": "Settings" }
+  ]
+}

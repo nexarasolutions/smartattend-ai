@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: smartattend-api
+    runtime: python
+    region: singapore
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 90 --access-logfile - --error-logfile - backend.wsgi:app
+    healthCheckPath: /_app/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SMARTATTEND_JWT_SECRET
+        generateValue: true
+      - key: SMARTATTEND_BOOTSTRAP_TOKEN
+        sync: false
+      - key: SMARTATTEND_ALLOWED_ORIGINS
+        sync: false
+      - key: SMARTATTEND_COOKIE_SECURE
+        value: "true"
+      - key: SMARTATTEND_REQUIRE_HTTPS
+        value: "true"

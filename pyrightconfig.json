@@ -1,0 +1,24 @@
+{
+  "include": ["backend", "iot", "smartattend_ml"],
+  "exclude": [".venv/**", "dist/**", "node_modules/**"],
+  "venvPath": "/home/ubuntu/smartattend",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "reportMissingTypeStubs": "none",
+  "extraPaths": [
+    "/home/ubuntu/smartattend",
+    "/home/ubuntu/smartattend/.venv/lib/python3.12/site-packages",
+    "/home/ubuntu/.local/lib/python3.12/site-packages"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "/home/ubuntu/smartattend",
+      "extraPaths": [
+        "/home/ubuntu/smartattend",
+        "/home/ubuntu/smartattend/.venv/lib/python3.12/site-packages",
+        "/home/ubuntu/.local/lib/python3.12/site-packages"
+      ]
+    }
+  ]
+}
