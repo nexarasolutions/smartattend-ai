@@ -44,8 +44,13 @@ def create_app(test_config: dict | None = None) -> Flask:
         migrate.init_app(app, db, directory=str(Path(__file__).resolve().parents[1] / "migrations"))
 
     allowed_origins = list(app.config.get("ALLOWED_ORIGINS", ()))
-    if allowed_origins:
-        CORS(app, resources={r"/api/*": {"origins": allowed_origins, "supports_credentials": True}}, allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key", "X-Device-Enrollment-Token", "X-Admin-Bootstrap-Token", "X-CSRF-Token"])
+    if not allowed_origins:
+        allowed_origins = ["*"]
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": allowed_origins, "supports_credentials": True}},
+        allow_headers=["Authorization", "Content-Type", "X-Request-ID", "Idempotency-Key", "X-Device-Enrollment-Token", "X-Admin-Bootstrap-Token", "X-CSRF-Token"]
+    )
 
     @app.before_request
     def assign_request_id():

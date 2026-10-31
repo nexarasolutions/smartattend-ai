@@ -396,7 +396,17 @@ export function LiveWorkspace() {
       add('systemStatus', '/system/status');
       if (role === 'Admin') { add('pendingUsers', '/admin/users?status=pending'); add('departments', '/admin/departments'); add('classrooms', '/admin/classrooms'); add('sections', '/admin/sections'); }
     }
-    Promise.all(requests.map(async ([key, promise]) => [key, await promise] as const))
+    Promise.all(
+      requests.map(async ([key, promise]) => {
+        try {
+          const result = await promise;
+          return [key, result] as const;
+        } catch (requestErr) {
+          console.warn(`API call for ${key} returned non-fatal error:`, requestErr);
+          return [key, Array.isArray(key) ? [] : {}] as const;
+        }
+      })
+    )
       .then((entries) => { if (active) setData(Object.fromEntries(entries)); })
       .catch((requestError) => { if (active) setError(toApiFailure(requestError).message); })
       .finally(() => { if (active) setLoading(false); });

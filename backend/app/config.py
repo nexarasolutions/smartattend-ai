@@ -33,6 +33,19 @@ class Config:
             database_url = database_url.replace("postgres://", "postgresql+psycopg2://", 1)
         elif database_url.startswith("postgresql://") and "+psycopg2" not in database_url:
             database_url = database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+        raw_origins = [origin.strip() for origin in os.getenv("SMARTATTEND_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
+        # Always allow Vercel domains and local development
+        default_origins = [
+            "https://smartattend-ai.vercel.app",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+        ]
+        for o in default_origins:
+            if o not in raw_origins:
+                raw_origins.append(o)
+
         return {
             "SESSION_COOKIE_NAME": "smartattend_session",
             "SESSION_COOKIE_HTTPONLY": True,
@@ -46,5 +59,5 @@ class Config:
             "BOOTSTRAP_TOKEN": os.getenv("SMARTATTEND_BOOTSTRAP_TOKEN"),
             "REQUIRE_HTTPS": os.getenv("SMARTATTEND_REQUIRE_HTTPS", "true").lower() not in {"0", "false", "no"},
             "DEVICE_HEARTBEAT_OFFLINE_SECONDS": int(os.getenv("SMARTATTEND_HEARTBEAT_OFFLINE_SECONDS", "300")),
-            "ALLOWED_ORIGINS": tuple(origin.strip() for origin in os.getenv("SMARTATTEND_ALLOWED_ORIGINS", "").split(",") if origin.strip()),
+            "ALLOWED_ORIGINS": tuple(raw_origins),
         }

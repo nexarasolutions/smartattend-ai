@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { supabase } from './auth';
 
-const FALLBACK_API_BASE = 'https://smartattend-api.onrender.com/api';
+const FALLBACK_API_BASE = '/api';
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) || FALLBACK_API_BASE;
 
 /** All browser API requests use the configured base URL */
