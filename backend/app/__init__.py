@@ -140,7 +140,14 @@ def _register_cli(app: Flask) -> None:
 def _register_spa(app: Flask) -> None:
     @app.get("/")
     def serve_spa():
-        return send_from_directory(app.config["PUBLIC_DIST_DIRECTORY"], "index.html")
+        dist_dir = app.config.get("PUBLIC_DIST_DIRECTORY")
+        if dist_dir and os.path.isfile(os.path.join(dist_dir, "index.html")):
+            return send_from_directory(dist_dir, "index.html")
+        return jsonify(
+            service="smartattend-api",
+            status="online",
+            message="SmartAttend AI Backend API is running successfully. Access the frontend application via Vercel.",
+        ), 200
 
     @app.get("/<path:requested_path>")
     def serve_static_or_spa(requested_path: str):
