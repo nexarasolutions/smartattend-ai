@@ -5,7 +5,6 @@ import { AppShell } from './components/Layout';
 import { BrandMark } from './components/BrandMark';
 import { AuthProvider, useAuth } from './lib/auth';
 import { LiveWorkspace } from './pages/LiveWorkspace';
-import { AttendancePage } from './pages/Attendance';
 import { PredictionPage } from './pages/Predictions';
 import { ReportsPage } from './pages/Reports';
 import { DevicesPage } from './pages/Devices';
@@ -289,7 +288,7 @@ export function App() {
           <Route element={<WorkspaceRoute />}>
             <Route element={<AppShell />}>
               <Route index element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
-              <Route path="attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
+              <Route path="attendance" element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
               <Route path="predictions" element={<ProtectedRoute><PredictionPage /></ProtectedRoute>} />
               <Route path="reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
               <Route path="devices" element={<ProtectedRoute><DevicesPage /></ProtectedRoute>} />
