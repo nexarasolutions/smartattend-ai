@@ -8,6 +8,7 @@ from pathlib import Path
 import click
 from flask import Flask, abort, g, jsonify, request, send_from_directory
 from flask_cors import CORS
+from flask_swagger_ui import get_swaggerui_blueprint
 from marshmallow import ValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -108,6 +109,25 @@ def create_app(test_config: dict | None = None) -> Flask:
             "first_admin_bootstrap_configured": bool(app.config.get("BOOTSTRAP_TOKEN")),
             "demo_data_is_live": False,
         }, request_id=g.get("request_id"))
+
+    swagger_blueprint = get_swaggerui_blueprint(
+        "/docs",
+        "/openapi.json",
+        config={
+            "app_name": "SmartAttend AI API",
+            "displayRequestDuration": True,
+            "docExpansion": "none",
+        },
+    )
+    app.register_blueprint(swagger_blueprint, url_prefix="/docs")
+
+    @app.get("/openapi.json")
+    def openapi_spec():
+        return send_from_directory(
+            str(Path(__file__).resolve().parents[1]),
+            "openapi.json",
+            mimetype="application/json",
+        )
 
     from .api import register_blueprints
     register_blueprints(app)
