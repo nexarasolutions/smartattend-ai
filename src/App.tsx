@@ -5,11 +5,6 @@ import { AppShell } from './components/Layout';
 import { BrandMark } from './components/BrandMark';
 import { AuthProvider, useAuth } from './lib/auth';
 import { LiveWorkspace } from './pages/LiveWorkspace';
-import { AttendancePage } from './pages/Attendance';
-import { PredictionPage } from './pages/Predictions';
-import { ReportsPage } from './pages/Reports';
-import { DevicesPage } from './pages/Devices';
-import { PeoplePage } from './pages/People';
 import { SettingsPage } from './pages/Settings';
 
 function LoginPage() {
@@ -289,12 +284,12 @@ export function App() {
           <Route element={<WorkspaceRoute />}>
             <Route element={<AppShell />}>
               <Route index element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
-              <Route path="attendance" element={<ProtectedRoute><AttendancePage /></ProtectedRoute>} />
-              <Route path="predictions" element={<ProtectedRoute><PredictionPage /></ProtectedRoute>} />
-              <Route path="reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
-              <Route path="devices" element={<ProtectedRoute><DevicesPage /></ProtectedRoute>} />
-              <Route path="students" element={<ProtectedRoute><PeoplePage kind="students" /></ProtectedRoute>} />
-              <Route path="staff" element={<ProtectedRoute><PeoplePage kind="staff" /></ProtectedRoute>} />
+              <Route path="attendance" element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
+              <Route path="predictions" element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
+              <Route path="reports" element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
+              <Route path="devices" element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
+              <Route path="students" element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
+              <Route path="staff" element={<ProtectedRoute><LiveWorkspace /></ProtectedRoute>} />
               <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Route>
